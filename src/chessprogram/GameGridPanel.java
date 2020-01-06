@@ -162,8 +162,8 @@ public class GameGridPanel extends JPanel {
 					break;
 				}
 			}
-			if(result.equals(State.UNPLAYED)) {
-				if(JOptionPane.showConfirmDialog(null, "Game in progress between "+players[i]+" and "+players[j]+"?", "Confirm marking game in progress", JOptionPane.YES_NO_OPTION) == 0) {
+			if(result.equals(State.UNPLAYED)&&GameGridPanel.this.tournament.isAvailable(i)&&GameGridPanel.this.tournament.isAvailable(j)) {
+				if(JOptionPane.showConfirmDialog(null, "Game in progress between "+players[i]+" and "+players[j]+"?", "Confirming update", JOptionPane.YES_NO_OPTION) == 0) {
 					GameGridPanel.this.tournament.setResult(i, j, State.PLAYING);
 				}
 			}

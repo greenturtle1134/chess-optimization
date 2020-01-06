@@ -85,13 +85,7 @@ public class Tournament {
 	
 	public void setResult(int source, int target, State state) {
 		results[source][target] = state;
-		results[target][source] = state;
-		if(state.equals(State.UNPLAYED)) {
-			unplayed.addEdge(source, target);
-		}
-		else {
-			unplayed.removeEdge(source, target);
-		}
+		results[target][source] = state.invert();
 		if(state.equals(State.PLAYING)) {
 			disablePlayer(source);
 			disablePlayer(target);
@@ -102,6 +96,14 @@ public class Tournament {
 			}
 			if(present[target]) {
 				enablePlayer(target);
+			}
+		}
+		if(present[source]&&present[target]) {
+			if(state.equals(State.UNPLAYED)) {
+				unplayed.addEdge(source, target);
+			}
+			else {
+				unplayed.removeEdge(source, target);
 			}
 		}
 	}
@@ -190,6 +192,10 @@ public class Tournament {
 		return results[source][target];
 	}
 	
+	public boolean isAvailable(int player) {
+		return unplayed.containsVertex(player);
+	}
+	
 	public static enum State {
 
 		WON("WON","W", GREEN),
@@ -212,6 +218,16 @@ public class Tournament {
 			symbols.put(".", UNPLAYED);
 			symbols.put("X", N_A);
 		}
+		private static Map<State, State> inverse = new HashMap<State, State>();
+		static {
+			inverse.put(WON, LOST);
+			inverse.put(LOST, WON);
+			inverse.put(DRAW, DRAW);
+			inverse.put(UNPLAYED, UNPLAYED);
+			inverse.put(PLAYING, PLAYING);
+			inverse.put(UNPLAYABLE, UNPLAYABLE);
+			inverse.put(N_A, N_A);
+		}
 		
 		State(String name, String write, Color color) {
 			this.color = color;
@@ -229,6 +245,10 @@ public class Tournament {
 
 		public Color getColor() {
 			return color;
+		}
+		
+		public State invert() {
+			return inverse.get(this);
 		}
 		
 		public static State getState(String symbol) {
