@@ -1,5 +1,8 @@
 package chessprogram;
 
+import static java.awt.Color.*;
+
+import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -42,6 +45,10 @@ public class Tournament {
 	 * A name for saving and stuff
 	 */
 	private String name;
+	/**
+	 * The panel display this tournament's results
+	 */
+	private GameGridPanel panel = null;
 	
 	public Tournament(String name, String[] players) {
 		this.name = name;
@@ -59,6 +66,9 @@ public class Tournament {
 		}
 		this.present = new boolean[players.length];
 		Arrays.fill(present, true);
+		for(int i = 0; i<players.length; i++) {
+			this.setResult(i, i, State.N_A);
+		}
 	}
 	
 	public Pair<Integer, Integer> nextPair() {
@@ -86,6 +96,7 @@ public class Tournament {
 		}
 		if(state.equals(State.UNPLAYED)) {
 			unplayed.addEdge(source, target);
+			results[target][source] = State.UNPLAYED;
 		}
 		else {
 			unplayed.removeEdge(source, target);
@@ -93,6 +104,7 @@ public class Tournament {
 		if(state.equals(State.PLAYING)) {
 			disablePlayer(source);
 			disablePlayer(target);
+			results[target][source] = State.PLAYING;
 		}
 		else {
 			if(present[source]) {
@@ -104,7 +116,7 @@ public class Tournament {
 		}
 	}
 	
-	public void enablePlayer(int player) {
+	private void enablePlayer(int player) {
 		unplayed.addVertex(player);
 		for(int i = 0; i<results[player].length; i++) {
 			if(i!=player&&present[i]&&results[player][i].equals(State.UNPLAYED)) {
@@ -113,8 +125,20 @@ public class Tournament {
 		}
 	}
 	
-	public void disablePlayer(int player) {
+	private void disablePlayer(int player) {
 		unplayed.removeVertex(player);
+	}
+	
+	public void setAttend(int player, boolean value) {
+		if(value != present[player]) {
+			present[player] = value;
+			if(value) {
+				enablePlayer(player);
+			}
+			else {
+				disablePlayer(player);
+			}
+		}
 	}
 	
 	public int getScore(int player) {
@@ -133,7 +157,7 @@ public class Tournament {
 	/**
 	 * Regenerate the graph based on the results matrix. All methods maintain the graph; called when reading a results table.
 	 */
-	public void regenerateGraph() {
+	private void regenerateGraph() {
 		unplayed = new SimpleGraph<Integer, DefaultEdge>(DefaultEdge.class);
 		for(int i = 0; i<results.length; i++) {
 			this.unplayed.addVertex(i);
@@ -178,61 +202,51 @@ public class Tournament {
 	
 	public static enum State {
 
-		WON{
-			public String symbol() {
-				return "W";
-			}
-			public String writeAs() {
-				return "W";
-			}
-		},
-		LOST{
-			public String symbol() {
-				return "L";
-			}
-			public String writeAs() {
-				return "L";
-			}
-		},
-		DRAW{
-			public String symbol() {
-				return "D";
-			}
-			public String writeAs() {
-				return "D";
-			}
-		},
-		UNPLAYED{
-			public String symbol() {
-				return ".";
-			}
-			public String writeAs() {
-				return ".";
-			}
-		},
-		PLAYING{
-			public String symbol() {
-				return "?";
-			}
-			public String writeAs() {
-				return ".";
-			}
-		},
-		UNPLAYABLE{
-			public String symbol() {
-				return "-";
-			}
-			public String writeAs() {
-				return ".";
-			}
-		},
-		N_A{
-			public String symbol() {
-				return "X";
-			}
-			public String writeAs() {
-				return "X";
-			}
+		WON("W","W", GREEN),
+		LOST("L","L", GREEN),
+		DRAW("D","D", GREEN),
+		UNPLAYED("·",".", YELLOW),
+		PLAYING("?",".", CYAN),
+		UNPLAYABLE("X",".", RED),
+		N_A("X","X", BLACK);
+		
+		private final String symbol;
+		private final String write;
+		private final Color color;
+		
+		private static Map<String, State> symbols = new HashMap<String, State>();
+		static {
+			symbols.put("W", WON);
+			symbols.put("L", LOST);
+			symbols.put("D", DRAW);
+			symbols.put(".", UNPLAYED);
+			symbols.put("X", N_A);
 		}
+		
+		State(String symbol, String write, Color color) {
+			this.color = color;
+			this.symbol = symbol;
+			this.write = write;
+		}
+
+		public String getSymbol() {
+			return symbol;
+		}
+
+		public String getWrite() {
+			return write;
+		}
+
+		public Color getColor() {
+			return color;
+		}
+		
+		public static State getState(String symbol) {
+			return symbols.get(symbol);
+		}
+	}
+	
+	public boolean isPresent(int player) {
+		return present[player];
 	}
 }
