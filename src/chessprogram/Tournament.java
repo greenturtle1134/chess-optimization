@@ -85,18 +85,9 @@ public class Tournament {
 	
 	public void setResult(int source, int target, State state) {
 		results[source][target] = state;
-		if(state.equals(State.WON)) {
-			results[target][source] = State.LOST;
-		}
-		if(state.equals(State.LOST)) {
-			results[target][source] = State.WON;
-		}
-		if(state.equals(State.DRAW)) {
-			results[target][source] = State.DRAW;
-		}
+		results[target][source] = state;
 		if(state.equals(State.UNPLAYED)) {
 			unplayed.addEdge(source, target);
-			results[target][source] = State.UNPLAYED;
 		}
 		else {
 			unplayed.removeEdge(source, target);
@@ -104,7 +95,6 @@ public class Tournament {
 		if(state.equals(State.PLAYING)) {
 			disablePlayer(source);
 			disablePlayer(target);
-			results[target][source] = State.PLAYING;
 		}
 		else {
 			if(present[source]) {
@@ -119,7 +109,7 @@ public class Tournament {
 	private void enablePlayer(int player) {
 		unplayed.addVertex(player);
 		for(int i = 0; i<results[player].length; i++) {
-			if(i!=player&&present[i]&&results[player][i].equals(State.UNPLAYED)) {
+			if(i!=player&&present[i]&&results[player][i].equals(State.UNPLAYED)&&unplayed.containsVertex(i)) {
 				unplayed.addEdge(player, i);
 			}
 		}
@@ -202,15 +192,15 @@ public class Tournament {
 	
 	public static enum State {
 
-		WON("W","W", GREEN),
-		LOST("L","L", GREEN),
-		DRAW("D","D", GREEN),
+		WON("WON","W", GREEN),
+		LOST("LOST","L", GREEN),
+		DRAW("DRAW","D", GREEN),
 		UNPLAYED("·",".", YELLOW),
 		PLAYING("?",".", CYAN),
 		UNPLAYABLE("X",".", RED),
 		N_A("X","X", BLACK);
 		
-		private final String symbol;
+		private final String name;
 		private final String write;
 		private final Color color;
 		
@@ -223,14 +213,14 @@ public class Tournament {
 			symbols.put("X", N_A);
 		}
 		
-		State(String symbol, String write, Color color) {
+		State(String name, String write, Color color) {
 			this.color = color;
-			this.symbol = symbol;
+			this.name = name;
 			this.write = write;
 		}
 
-		public String getSymbol() {
-			return symbol;
+		public String getName() {
+			return name;
 		}
 
 		public String getWrite() {

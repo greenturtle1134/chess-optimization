@@ -10,15 +10,19 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.border.Border;
 
 import chessprogram.Tournament.State;
 
 public class GameGridPanel extends JPanel {
+	private static final Border BLUE_BORDER = BorderFactory.createLineBorder(Color.BLUE, 3);
+	private static final Border BLACK_BORDER = BorderFactory.createLineBorder(Color.BLACK);
+	private static final Border NO_BORDER = BorderFactory.createEmptyBorder();
+	
 	private Tournament tournament;
 	private JLabel[][] labels;
 	private JLabel[] scores;
@@ -73,7 +77,7 @@ public class GameGridPanel extends JPanel {
 	}
 	
 	private void setLabel(int i, int j, State state) {
-		labels[i][j].setText(state.getSymbol());
+		labels[i][j].setText(state.getName());
 		labels[i][j].setBackground(state.getColor());
 	}
 	
@@ -81,13 +85,13 @@ public class GameGridPanel extends JPanel {
 		removeHighlight();
 		highX = x;
 		highY = y;
-		labels[x][y].setBorder(BorderFactory.createLineBorder(Color.BLUE));
+		labels[x][y].setBorder(BLUE_BORDER);
 	}
 	
 	public void removeHighlight() {
-		labels[highX][highY].setBorder(BorderFactory.createEmptyBorder());
+		labels[highX][highY].setBorder(NO_BORDER);
 	}
-	
+
 	private class ToggleListener implements ActionListener {
 		private int i;
 		
@@ -109,6 +113,7 @@ public class GameGridPanel extends JPanel {
 					update(i, j);
 				}
 			}
+			Application.makeSuggestion();
 		}
 	}
 	
@@ -122,23 +127,24 @@ public class GameGridPanel extends JPanel {
 		
 		@Override
 		public void mouseEntered(MouseEvent e) {
-			if(i!=GameGridPanel.this.highX||j!=GameGridPanel.this.highY) {
-				GameGridPanel.this.labels[i][j].setBorder(BorderFactory.createLineBorder(Color.BLACK));
-			}
+			GameGridPanel.this.labels[i][j].setBorder(BLACK_BORDER);
 		}
 		
 		@Override
 		public void mouseExited(MouseEvent e) {
 			if(i!=GameGridPanel.this.highX||j!=GameGridPanel.this.highY) {
-				GameGridPanel.this.labels[i][j].setBorder(BorderFactory.createEmptyBorder());
+				GameGridPanel.this.labels[i][j].setBorder(NO_BORDER);
+			}
+			else {
+				GameGridPanel.this.labels[i][j].setBorder(BLUE_BORDER);
 			}
 		}
 		
 		@Override
 		public void mousePressed(MouseEvent e) {
 			State result = GameGridPanel.this.tournament.getResult(i, j);
+			String[] players = GameGridPanel.this.tournament.getPlayers();
 			if(result.equals(State.PLAYING)||result.equals(State.DRAW)||result.equals(State.WON)||result.equals(State.LOST)) {
-				String[] players = GameGridPanel.this.tournament.getPlayers();
 				String[] options = {players[i], "Draw", players[j], "Clear cell"};
 				int choice = JOptionPane.showOptionDialog(null, "Who won?", "Entering result: "+players[i]+" v.s. "+players[j], JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
 				switch(choice) {
@@ -157,18 +163,16 @@ public class GameGridPanel extends JPanel {
 				}
 			}
 			if(result.equals(State.UNPLAYED)) {
-				GameGridPanel.this.tournament.setResult(i, j, State.PLAYING);
+				if(JOptionPane.showConfirmDialog(null, "Game in progress between "+players[i]+" and "+players[j]+"?", "Confirm marking game in progress", JOptionPane.YES_NO_OPTION) == 0) {
+					GameGridPanel.this.tournament.setResult(i, j, State.PLAYING);
+				}
+			}
+			if(result.equals(State.UNPLAYABLE)) {
+				GameGridPanel.this.tournament.setResult(i, j, State.UNPLAYED);
 			}
 			GameGridPanel.this.update(i, j);
 			GameGridPanel.this.update(j, i);
+			Application.makeSuggestion();
 		}
-	}
-	
-	public static void main(String[] args) {
-		JFrame frame = new JFrame("");
-		String[] names = {"A", "B", "C", "D", "E", "F", "G"};
-		frame.setContentPane(new GameGridPanel(new Tournament("Test", names)));
-		frame.setSize(400, 400);
-		frame.setVisible(true);
 	}
 }
