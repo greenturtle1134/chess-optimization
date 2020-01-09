@@ -198,17 +198,16 @@ public class Tournament {
 	
 	public static enum State {
 
-		WON("WON","W", GREEN),
-		LOST("LOST","L", GREEN),
-		DRAW("DRAW","D", GREEN),
-		UNPLAYED("·",".", YELLOW),
-		PLAYING("?",".", CYAN),
-		UNPLAYABLE("X",".", RED),
-		N_A("X","X", BLACK);
+		WON("WON","W"),
+		LOST("LOST","L"),
+		DRAW("DRAW","D"),
+		UNPLAYED("UNPLAYED","."),
+		PLAYING("PLAYING","."),
+		UNPLAYABLE("BLOCKED","."),
+		N_A("INVALID","X");
 		
 		private final String name;
 		private final String write;
-		private final Color color;
 		
 		private static Map<String, State> symbols = new HashMap<String, State>();
 		static {
@@ -229,8 +228,7 @@ public class Tournament {
 			inverse.put(N_A, N_A);
 		}
 		
-		State(String name, String write, Color color) {
-			this.color = color;
+		State(String name, String write) {
 			this.name = name;
 			this.write = write;
 		}
@@ -241,10 +239,6 @@ public class Tournament {
 
 		public String getWrite() {
 			return write;
-		}
-
-		public Color getColor() {
-			return color;
 		}
 		
 		public State invert() {

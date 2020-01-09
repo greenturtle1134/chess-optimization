@@ -29,6 +29,7 @@ public class GameGridPanel extends JPanel {
 	private JButton[] buttons;
 	private int highX = 0;
 	private int highY = 0;
+	private ColorScheme scheme;
 	public GameGridPanel(Tournament tournament) {
 		this.tournament = tournament;
 		String[] players = tournament.getPlayers();
@@ -69,6 +70,8 @@ public class GameGridPanel extends JPanel {
 		this.setLayout(new BorderLayout());
 		this.add(center, BorderLayout.CENTER);
 		this.add(side, BorderLayout.EAST);
+		
+		this.scheme = new ColorScheme();
 	}
 	
 	public void update(int i, int j) {
@@ -77,8 +80,9 @@ public class GameGridPanel extends JPanel {
 	}
 	
 	private void setLabel(int i, int j, State state) {
-		labels[i][j].setText(state.getName());
-		labels[i][j].setBackground(state.getColor());
+		labels[i][j].setText(scheme.getText(state));
+		labels[i][j].setForeground(scheme.getTextColor(state));
+		labels[i][j].setBackground(scheme.getFill(state));
 	}
 	
 	public void setHighlight(int x, int y) {
