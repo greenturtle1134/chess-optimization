@@ -30,7 +30,7 @@ public class GameGridPanel extends JPanel {
 	private int highX = 0;
 	private int highY = 0;
 	private ColorScheme scheme;
-	public GameGridPanel(Tournament tournament) {
+	public GameGridPanel(Tournament tournament, ColorScheme scheme) {
 		this.tournament = tournament;
 		String[] players = tournament.getPlayers();
 		JPanel center = new JPanel(new GridLayout(players.length+1, players.length+1));
@@ -71,7 +71,7 @@ public class GameGridPanel extends JPanel {
 		this.add(center, BorderLayout.CENTER);
 		this.add(side, BorderLayout.EAST);
 		
-		this.scheme = new ColorScheme();
+		this.scheme = scheme;
 	}
 	
 	public void update(int i, int j) {

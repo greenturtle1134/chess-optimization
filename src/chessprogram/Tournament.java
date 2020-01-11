@@ -215,6 +215,8 @@ public class Tournament {
 			symbols.put("L", LOST);
 			symbols.put("D", DRAW);
 			symbols.put(".", UNPLAYED);
+			symbols.put(".", PLAYING);
+			symbols.put(".", UNPLAYED);
 			symbols.put("X", N_A);
 		}
 		private static Map<State, State> inverse = new HashMap<State, State>();

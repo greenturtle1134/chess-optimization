@@ -14,7 +14,9 @@ public class ColorScheme {
 	
 	public ColorScheme(Properties properties) {
 		for(State state : State.values()) {
-			
+			text.put(state, properties.getProperty(state.getName()+"_TEXT"));
+			fillColor.put(state, Color.decode(properties.getProperty(state.getName()+"_COLOR")));
+			textColor.put(state, Color.decode(properties.getProperty(state.getName()+"_COLOR_TEXT")));
 		}
 	}
 	
