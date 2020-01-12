@@ -7,6 +7,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -29,8 +33,10 @@ public class GameGridPanel extends JPanel {
 	private JButton[] buttons;
 	private int highX = 0;
 	private int highY = 0;
-	public GameGridPanel(Tournament tournament) {
+	private Application application;
+	public GameGridPanel(Tournament tournament, Application application) {
 		this.tournament = tournament;
+		this.application = application;
 		String[] players = tournament.getPlayers();
 		JPanel center = new JPanel(new GridLayout(players.length+1, players.length+1));
 		JPanel side = new JPanel(new GridLayout(players.length+1, 3));
@@ -113,7 +119,7 @@ public class GameGridPanel extends JPanel {
 					update(i, j);
 				}
 			}
-			Application.makeSuggestion();
+			application.makeSuggestion();
 		}
 	}
 	
@@ -172,7 +178,12 @@ public class GameGridPanel extends JPanel {
 			}
 			GameGridPanel.this.update(i, j);
 			GameGridPanel.this.update(j, i);
-			Application.makeSuggestion();
+			application.makeSuggestion();
+			try {
+				tournament.write(Application.PREFIX+tournament.getName()+Application.SUFFIX);
+			} catch (IOException e1) {
+				JOptionPane.showMessageDialog(null, "Error opening file: "+Application.PREFIX+tournament.getName()+Application.SUFFIX+"\n"+e1.getLocalizedMessage(), "Error!", JOptionPane.ERROR_MESSAGE);
+			}
 		}
 	}
 }

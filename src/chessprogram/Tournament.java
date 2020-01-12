@@ -1,9 +1,16 @@
 package chessprogram;
 
-import static java.awt.Color.*;
+import static java.awt.Color.BLACK;
+import static java.awt.Color.CYAN;
+import static java.awt.Color.GREEN;
+import static java.awt.Color.RED;
+import static java.awt.Color.YELLOW;
 
 import java.awt.Color;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -149,7 +156,7 @@ public class Tournament {
 	/**
 	 * Regenerate the graph based on the results matrix. All methods maintain the graph; called when reading a results table.
 	 */
-	private void regenerateGraph() {
+	public void regenerateGraph() {
 		unplayed = new SimpleGraph<Integer, DefaultEdge>(DefaultEdge.class);
 		for(int i = 0; i<results.length; i++) {
 			this.unplayed.addVertex(i);
@@ -161,19 +168,38 @@ public class Tournament {
 		}
 	}
 	
-	public static Tournament read(BufferedReader in) throws IOException {
+	public static Tournament read(String file) throws IOException {
+		BufferedReader in = new BufferedReader(new FileReader(file));
 		String name = in.readLine();
-		String[] players = in.readLine().split(" ");
+		String[] players = in.readLine().split(", ");
 		Tournament tournament = new Tournament(name, players);
+		for(int i = 0; i<players.length; i++) {
+			String[] resultLine = in.readLine().split(" ");
+			for(int j = 0; j<players.length; j++) {
+				tournament.results[i][j] = State.getState(resultLine[j]);
+			}
+		}
+		tournament.regenerateGraph();
+		in.close();
 		return tournament;
 	}
 	
-	public void write(PrintWriter out) {
+	public void write(String file) throws IOException {
+		PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(file)));
 		out.println(name);
 		out.println(String.join(", ", players));
 		for(int i = 0; i<results.length; i++) {
-			
+			if(i>0) {
+				out.println();
+			}
+			for(int j = 0; j<results.length; j++) {
+				if(j>0) {
+					out.print(" ");
+				}
+				out.print(results[i][j].getWrite());
+			}
 		}
+		out.close();
 	}
 	
 	public String getName() {

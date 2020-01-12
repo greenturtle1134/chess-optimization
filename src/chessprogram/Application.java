@@ -4,11 +4,18 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import org.jgrapht.alg.util.Pair;
@@ -17,20 +24,59 @@ import chessprogram.Tournament.State;
 
 public class Application {
 	
-	private static GameGridPanel grid;
-	private static Tournament tournament;
-	private static Pair<Integer, Integer> suggestion;
-	private static JLabel output;
-	private static JButton yes, no;
+	public static final String PREFIX = "tournament_";
+	public static final String SUFFIX = ".txt";
+	
+	private GameGridPanel grid;
+	private Tournament tournament;
+	private Pair<Integer, Integer> suggestion;
+	private JLabel output;
+	private JButton yes, no;
+	private JFrame frame;
 
 	public static void main(String[] args) {
-		String[] names = {"A", "B", "C", "D", "E", "F", "G"};
-		tournament = new Tournament("Test", names);
+		new Application();
+	}
+
+	public Application() {
+		frame = new JFrame();
+		this.changeFile();
+	}
+	
+	public void changeFile() {
+		File here = new File(".");
 		
-		JFrame frame = new JFrame("Tournament Assist - "+tournament.getName());
+		String[] options = Stream.concat(
+				Stream.of("Create new..."),
+				Arrays.stream(here.listFiles())
+				.filter(file -> file.isFile())
+				.map(file -> file.getName())
+				.filter(file -> file.length()>PREFIX.length() 
+						&& file.substring(0, PREFIX.length()).equalsIgnoreCase(PREFIX) 
+						&& file.substring(file.length()-SUFFIX.length()).equals(SUFFIX))
+				.map(file -> file.substring(PREFIX.length(), file.length()-SUFFIX.length())))
+				.toArray(String[]::new);
+		int choice = JOptionPane.showOptionDialog(null, "Which file to open?", "Open file", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
+		if(choice == -1) {
+			System.exit(0);
+		}
+		if(choice == 0) {
+			this.tournament = new Tournament(JOptionPane.showInputDialog("Enter name:"), JOptionPane.showInputDialog("Enter players, separate with commas:").split(", *"));
+		}
+		else {
+			try {
+				this.tournament = Tournament.read(PREFIX+options[choice]+SUFFIX);
+			} catch (IOException e) {
+				JOptionPane.showMessageDialog(null, "Error opening file: "+PREFIX+options[choice]+SUFFIX+"\n"+e.getLocalizedMessage(), "Error!", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+		}
+		
+		frame.setTitle("Tournament Assist - "+tournament.getName());
+		
 		JPanel panel = new JPanel(new BorderLayout());
 		
-		grid = new GameGridPanel(tournament);
+		grid = new GameGridPanel(tournament, this);
 		panel.add(grid, BorderLayout.CENTER);
 		
 		JPanel bottomPanel = new JPanel(new BorderLayout());
@@ -47,6 +93,7 @@ public class Application {
 		update.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
+				tournament.regenerateGraph();
 				makeSuggestion();
 			}
 		});
@@ -63,8 +110,8 @@ public class Application {
 		
 		makeSuggestion();
 	}
-	
-	public static void makeSuggestion() {
+
+	public void makeSuggestion() {
 		suggestion = tournament.nextPair();
 		if(suggestion != null) {
 			String[] players = tournament.getPlayers();
@@ -81,7 +128,7 @@ public class Application {
 		}
 	}
 
-	private static class BooleanCallback implements ActionListener {
+	private class BooleanCallback implements ActionListener {
 		private boolean value;
 		
 		private BooleanCallback(boolean value) {
