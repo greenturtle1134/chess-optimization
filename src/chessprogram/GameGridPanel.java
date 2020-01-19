@@ -7,10 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -21,10 +18,15 @@ import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 
 import chessprogram.Tournament.State;
+import static chessprogram.Tournament.State.*;
 
 public class GameGridPanel extends JPanel {
-	private static final Border BLUE_BORDER = BorderFactory.createLineBorder(Color.BLUE, 3);
-	private static final Border BLACK_BORDER = BorderFactory.createLineBorder(Color.BLACK);
+	private static final long serialVersionUID = 1L;
+	
+	private static final Border SUGGEST_BORDER = BorderFactory.createDashedBorder(Color.BLUE, 3, 5, 2, false);
+	private static final Border SELECT_BORDER = BorderFactory.createLineBorder(Color.BLACK);
+	private static final Border SUGGEST_SELECT_BORDER = BorderFactory.createLineBorder(Color.BLUE, 3);
+	private static final Border UNSELECTABLE_BORDER = BorderFactory.createLineBorder(Color.RED);
 	private static final Border NO_BORDER = BorderFactory.createEmptyBorder();
 	
 	private Tournament tournament;
@@ -67,7 +69,7 @@ public class GameGridPanel extends JPanel {
 			}
 			side.add(new JLabel("Score:"));
 			side.add(scores[i]);
-			buttons[i] = new JButton("Toggle");
+			buttons[i] = new JButton("Present");
 			buttons[i].addActionListener(new ToggleListener(i));
 			side.add(buttons[i]);
 		}
@@ -78,8 +80,13 @@ public class GameGridPanel extends JPanel {
 	}
 	
 	public void update(int i, int j) {
-		setLabel(i, j, tournament.getResult(i, j));
-		scores[i].setText(tournament.getScore(i)+"");
+		if(tournament.isPresent(i)&&tournament.isPresent(j)){
+			setLabel(i, j, tournament.getResult(i, j));
+			scores[i].setText(tournament.getScore(i)+"");
+		}
+		else {
+			setLabel(i, j, UNPLAYABLE);
+		}
 	}
 	
 	private void setLabel(int i, int j, State state) {
@@ -91,7 +98,7 @@ public class GameGridPanel extends JPanel {
 		removeHighlight();
 		highX = x;
 		highY = y;
-		labels[x][y].setBorder(BLUE_BORDER);
+		labels[x][y].setBorder(SUGGEST_BORDER);
 	}
 	
 	public void removeHighlight() {
@@ -107,16 +114,20 @@ public class GameGridPanel extends JPanel {
 
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
-			if(GameGridPanel.this.tournament.isPresent(i)) {
-				GameGridPanel.this.tournament.setAttend(i, false);
-				for(int j = 0; j<GameGridPanel.this.labels[i].length; j++) {
-					setLabel(i, j, State.UNPLAYABLE);
+			if(tournament.isPresent(i)) {
+				tournament.setAttend(i, false);
+				for(int j = 0; j<labels[i].length; j++) {
+					buttons[i].setText("Absent");
+					setLabel(i, j, UNPLAYABLE);
+					setLabel(j, i, UNPLAYABLE);
 				}
 			}
 			else {
-				GameGridPanel.this.tournament.setAttend(i, true);
-				for(int j = 0; j<GameGridPanel.this.labels[i].length; j++) {
+				tournament.setAttend(i, true);
+				for(int j = 0; j<labels[i].length; j++) {
+					buttons[i].setText("Present");
 					update(i, j);
+					update(j, i);
 				}
 			}
 			application.makeSuggestion();
@@ -133,51 +144,61 @@ public class GameGridPanel extends JPanel {
 		
 		@Override
 		public void mouseEntered(MouseEvent e) {
-			GameGridPanel.this.labels[i][j].setBorder(BLACK_BORDER);
+			if(i!=highX||j!=highY) {
+				if((tournament.isAvailable(i)&&tournament.isAvailable(j))||!tournament.getResult(i, j).equals(UNPLAYED)) {
+					labels[i][j].setBorder(SELECT_BORDER);
+				}
+				else {
+					labels[i][j].setBorder(UNSELECTABLE_BORDER);
+				}
+			}
+			else {
+				labels[i][j].setBorder(SUGGEST_SELECT_BORDER);
+			}
 		}
 		
 		@Override
 		public void mouseExited(MouseEvent e) {
-			if(i!=GameGridPanel.this.highX||j!=GameGridPanel.this.highY) {
-				GameGridPanel.this.labels[i][j].setBorder(NO_BORDER);
+			if(i!=highX||j!=highY) {
+				labels[i][j].setBorder(NO_BORDER);
 			}
 			else {
-				GameGridPanel.this.labels[i][j].setBorder(BLUE_BORDER);
+				labels[i][j].setBorder(SUGGEST_BORDER);
 			}
 		}
 		
 		@Override
 		public void mousePressed(MouseEvent e) {
-			State result = GameGridPanel.this.tournament.getResult(i, j);
-			String[] players = GameGridPanel.this.tournament.getPlayers();
-			if(result.equals(State.PLAYING)||result.equals(State.DRAW)||result.equals(State.WON)||result.equals(State.LOST)) {
+			State result = tournament.getResult(i, j);
+			String[] players = tournament.getPlayers();
+			if(result.equals(PLAYING)||result.equals(DRAW)||result.equals(WON)||result.equals(LOST)) {
 				String[] options = {players[i], "Draw", players[j], "Clear cell"};
 				int choice = JOptionPane.showOptionDialog(null, "Who won?", "Entering result: "+players[i]+" v.s. "+players[j], JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
 				switch(choice) {
 				case 0:
-					GameGridPanel.this.tournament.setResult(i, j, State.WON);
+					tournament.setResult(i, j, WON);
 					break;
 				case 1:
-					GameGridPanel.this.tournament.setResult(i, j, State.DRAW);
+					tournament.setResult(i, j, DRAW);
 					break;
 				case 2:
-					GameGridPanel.this.tournament.setResult(i, j, State.LOST);
+					tournament.setResult(i, j, LOST);
 					break;
 				case 3:
-					GameGridPanel.this.tournament.setResult(i, j, State.UNPLAYED);
+					tournament.setResult(i, j, UNPLAYED);
 					break;
 				}
 			}
-			if(result.equals(State.UNPLAYED)&&GameGridPanel.this.tournament.isAvailable(i)&&GameGridPanel.this.tournament.isAvailable(j)) {
+			if(result.equals(UNPLAYED)&&tournament.isAvailable(i)&&tournament.isAvailable(j)) {
 				if(JOptionPane.showConfirmDialog(null, "Game in progress between "+players[i]+" and "+players[j]+"?", "Confirming update", JOptionPane.YES_NO_OPTION) == 0) {
-					GameGridPanel.this.tournament.setResult(i, j, State.PLAYING);
+					tournament.setResult(i, j, PLAYING);
 				}
 			}
-			if(result.equals(State.UNPLAYABLE)) {
-				GameGridPanel.this.tournament.setResult(i, j, State.UNPLAYED);
+			if(result.equals(UNPLAYABLE)) {
+				tournament.setResult(i, j, UNPLAYED);
 			}
-			GameGridPanel.this.update(i, j);
-			GameGridPanel.this.update(j, i);
+			update(i, j);
+			update(j, i);
 			application.makeSuggestion();
 			try {
 				tournament.write(Application.PREFIX+tournament.getName()+Application.SUFFIX);

@@ -52,10 +52,6 @@ public class Tournament {
 	 * A name for saving and stuff
 	 */
 	private String name;
-	/**
-	 * The panel display this tournament's results
-	 */
-	private GameGridPanel panel = null;
 	
 	public Tournament(String name, String[] players) {
 		this.name = name;
@@ -79,11 +75,18 @@ public class Tournament {
 	}
 	
 	public Pair<Integer, Integer> nextPair() {
-		EdmondsMaximumCardinalityMatching<Integer, DefaultEdge> a = new EdmondsMaximumCardinalityMatching<Integer, DefaultEdge>(unplayed);
-		Matching<Integer, DefaultEdge> matching = a.getMatching();
+		EdmondsMaximumCardinalityMatching<Integer, DefaultEdge> emcm = new EdmondsMaximumCardinalityMatching<Integer, DefaultEdge>(unplayed);
+		Matching<Integer, DefaultEdge> matching = emcm.getMatching();
 		if(!matching.getEdges().isEmpty()) {
 			DefaultEdge edge = matching.getEdges().iterator().next();
-			return new Pair<Integer, Integer>(unplayed.getEdgeSource(edge), unplayed.getEdgeTarget(edge));
+			int a = unplayed.getEdgeSource(edge);
+			int b = unplayed.getEdgeTarget(edge);
+			if(a>b) {
+				return new Pair<Integer, Integer>(b, a);
+			}
+			else {
+				return new Pair<Integer, Integer>(a, b);
+			}
 		}
 		else {
 			return null;
@@ -158,10 +161,21 @@ public class Tournament {
 	 */
 	public void regenerateGraph() {
 		unplayed = new SimpleGraph<Integer, DefaultEdge>(DefaultEdge.class);
+		boolean[] available = new boolean[results.length];
+		Arrays.fill(available, true);
 		for(int i = 0; i<results.length; i++) {
-			this.unplayed.addVertex(i);
+			for(int j = 0; j<results.length; j++) {
+				if(results[i][j].equals(State.PLAYING)) {
+					available[i] = false;
+				}
+			}
+		}
+		for(int i = 0; i<results.length; i++) {
+			if(available[i]) {
+				this.unplayed.addVertex(i);
+			}
 			for(int j = 0; j<i; j++) {
-				if(results[i][j].equals(State.UNPLAYED)) {
+				if(available[i]&&available[j]&&results[i][j].equals(State.UNPLAYED)) {
 					unplayed.addEdge(i, j);
 				}
 			}
