@@ -47,17 +47,14 @@ public class GameGridPanel extends JPanel {
 		buttons = new JButton[players.length];
 		center.add(new JLabel(""));
 		for(String s : players) {
-			JLabel label = new JLabel(s);
-			label.setHorizontalAlignment(SwingConstants.CENTER);
-			center.add(label);
+			center.add(getNameLabel(s));
 		}
 		side.add(new JLabel(""));
 		side.add(new JLabel(""));
 		side.add(new JLabel(""));
 		for(int i = 0; i<labels.length; i++) {
-			JLabel label = new JLabel(players[i]);
-			label.setHorizontalAlignment(SwingConstants.CENTER);
-			center.add(label);
+			String s = players[i];
+			center.add(getNameLabel(players[i]));
 			scores[i] = new JLabel(tournament.getScore(i)+"");
 			for(int j = 0; j<labels.length; j++) {
 				labels[i][j] = new JLabel();
@@ -77,6 +74,13 @@ public class GameGridPanel extends JPanel {
 		this.setLayout(new BorderLayout());
 		this.add(center, BorderLayout.CENTER);
 		this.add(side, BorderLayout.EAST);
+	}
+
+	public JLabel getNameLabel(String s) {
+		JLabel label = new JLabel(s);
+		label.setHorizontalAlignment(SwingConstants.CENTER);
+		label.setToolTipText(s);
+		return label;
 	}
 	
 	public void update(int i, int j) {
